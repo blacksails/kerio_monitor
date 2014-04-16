@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require 'optparse'
 require 'httparty'
 require_relative 'settings'
@@ -10,8 +11,6 @@ class KerioMonitor
     get_settings
     setup_httparty
     handle_arguments!
-    login
-    logout
   end
 
   def get_settings
@@ -48,12 +47,44 @@ class KerioMonitor
         puts opts
         exit
       end
-
+      opts.on('-q', '--queue-length',
+              'Returns number of queued messages, and exit code 1 if the number is above 100.') { handle_q_flag }
     end
     begin o.parse!
     rescue OptionParser::InvalidOption => e
       puts e
       puts o
+      exit 1
+    end
+  end
+
+  def handle_q_flag
+    login
+    options = {
+        body: {
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'Queue.get',
+            params: {
+                query: {
+                    fields: ['id'],
+                    start: 0,
+                    limit: 10000
+                }
+            }
+        }.to_json
+    }
+    response = self.class.post '/admin/api/jsonrpc/', options
+    logout
+    if response.code != 200
+      puts 'Error getting queued messages'
+      exit 1
+    end
+    parsedresponse = JSON.parse response.body
+    puts parsedresponse['result']['list'].length
+    if parsedresponse['result']['list'].length < 100
+      exit
+    else
       exit 1
     end
   end
@@ -80,19 +111,19 @@ class KerioMonitor
       puts 'Error logging in'
       exit 1
     end
-    puts 'Logged in!'
     headers = response.headers
-    puts headers.inspect
-    puts response.body
-    puts headers['Set-Cookie']
     @headers['Cookie'] = headers['Set-Cookie']
     parsedbody = JSON.parse(response.body)
     @headers['X-Token'] = parsedbody['result']['token']
+    self.class.headers @headers
+  end
+
+  def get_queue
+
   end
 
   def logout
     options = {
-        headers: @headers,
         body: {
             jsonrpc: '2.0',
             id: 1,
@@ -100,12 +131,10 @@ class KerioMonitor
         }.to_json
     }
     response = self.class.post '/admin/api/jsonrpc/', options
-    puts response.body
     if response.code != 200
-      puts 'Error logging in'
+      puts 'Error logging out'
       exit 1
     end
-    puts 'Logged out!'
   end
 
 end
