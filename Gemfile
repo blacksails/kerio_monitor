@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
-gem 'httparty', '~> 0.13.1'
+gem 'httparty'
 gem 'psych'
-gem 'io/console'
+gem 'io-console'

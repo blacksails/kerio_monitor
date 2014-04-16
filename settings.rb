@@ -9,8 +9,12 @@ module Settings
 
   def create!
     puts 'It appears that we lack a configuration file, lets create one now!'
+    printf 'Enter kerio host address: '
+    kerio_host = gets.chomp
+    printf 'Enter kerio port: '
+    kerio_port = gets.chomp
     printf 'Enter kerio admin username: '
-    kerio_user = get.chomp
+    kerio_user = gets.chomp
     printf 'Enter kerio admin password: '
     kerio_pass = STDIN.noecho(&:gets).chomp; puts
     settings = {

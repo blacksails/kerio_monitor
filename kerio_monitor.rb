@@ -7,9 +7,20 @@ class KerioMonitor
 
   def initialize
     check_if_root
+    get_settings
     setup_httparty
     handle_arguments!
     login
+    logout
+  end
+
+  def get_settings
+    Dir.chdir File.dirname(__FILE__)
+    if File.exist? File.dirname(__FILE__)+'/config.yml'
+      Settings.load!
+    else
+      Settings.create!
+    end
   end
 
   def check_if_root
@@ -20,16 +31,14 @@ class KerioMonitor
   end
 
   def setup_httparty
-    self.class.base_uri '127.0.0.1'
+    self.class.base_uri 'https://elisa.avalonia.dk:4040'
     self.class.format :json
-    self.class.headers(
-        {
-            Accept: 'application/json-rpc',
-            ContentType: 'application/json-rpc',
-            Host: '127.0.0.1:4040',
-            Connection: 'close'
-        }
-    )
+    @headers = {
+        'Accept' => 'application/json-rpc',
+        'Content-Type' => 'application/json-rpc',
+        'Connection' => 'close'
+    }
+    self.class.headers @headers
   end
 
   def handle_arguments!
@@ -64,10 +73,41 @@ class KerioMonitor
                     version: '1.0.0'
                 }
             }
-        }
+        }.to_json
     }
     response = self.class.post '/admin/api/jsonrpc/', options
-    puts response.code
+    if response.code != 200
+      puts 'Error logging in'
+      exit 1
+    end
+    puts 'Logged in!'
+    headers = response.headers
+    puts headers.inspect
+    puts response.body
+    puts headers['Set-Cookie']
+    @headers['Cookie'] = headers['Set-Cookie']
+    parsedbody = JSON.parse(response.body)
+    @headers['X-Token'] = parsedbody['result']['token']
+  end
+
+  def logout
+    options = {
+        headers: @headers,
+        body: {
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'Session.logout'
+        }.to_json
+    }
+    response = self.class.post '/admin/api/jsonrpc/', options
+    puts response.body
+    if response.code != 200
+      puts 'Error logging in'
+      exit 1
+    end
+    puts 'Logged out!'
   end
 
 end
+
+KerioMonitor.new
