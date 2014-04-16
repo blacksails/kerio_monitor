@@ -49,6 +49,11 @@ class KerioMonitor
       end
       opts.on('-q', '--queue-length',
               'Returns number of queued messages, and exit code 1 if the number is above 100.') { handle_q_flag }
+      opts.on('-r', '--reset-config', 'Resets the config file') do
+        if File.exist? File.dirname(__FILE__)+'/config.yml'
+          File.delete File.dirname(__FILE__)+'/config.yml'
+        end
+      end
     end
     begin o.parse!
     rescue OptionParser::InvalidOption => e
