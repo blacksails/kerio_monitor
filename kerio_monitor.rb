@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'optparse'
 require 'httparty'
+require 'json'
 require_relative 'settings'
 
 class KerioMonitor
@@ -30,7 +31,7 @@ class KerioMonitor
   end
 
   def setup_httparty
-    self.class.base_uri 'https://elisa.avalonia.dk:4040'
+    self.class.base_uri 'https://'+Settings.kerio_host+':'+Settings.kerio_port
     self.class.format :json
     @headers = {
         'Accept' => 'application/json-rpc',

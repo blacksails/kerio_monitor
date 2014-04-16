@@ -15,4 +15,5 @@ PLATFORMS
 DEPENDENCIES
   httparty
   io-console
+  json
   psych

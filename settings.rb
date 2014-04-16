@@ -19,7 +19,9 @@ module Settings
     kerio_pass = STDIN.noecho(&:gets).chomp; puts
     settings = {
         kerio_user: kerio_user,
-        kerio_pass: kerio_pass
+        kerio_pass: kerio_pass,
+        kerio_host: kerio_host,
+        kerio_port: kerio_port
     }
     f = File.new(File.dirname(__FILE__)+'/config.yml', 'w')
     f.chown(-1,0)
