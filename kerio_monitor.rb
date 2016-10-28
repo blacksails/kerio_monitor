@@ -108,7 +108,13 @@ class KerioMonitor
               query: {
                 fields: ["referenceCount"],
                 start: 0,
-                limit: -1
+                limit: 1,
+                orderBy: [
+                  {
+                    columnName: "referenceCount",
+                    direction: "Desc"
+                  }
+                ]
               }
             }
         }.to_json
@@ -120,12 +126,7 @@ class KerioMonitor
       exit 255
     end
     parsedresponse = JSON.parse response.body
-    max_ref_count = 0
-    parsedresponse['result']['list'].each do |record|
-      if record['referenceCount'] > max_ref_count
-        max_ref_count = record['referenceCount']
-      end
-    end
+    max_ref_count = parsedresponse['result']['list'].first['referenceCount']
     puts max_ref_count
     if max_ref_count >= 255
       exit 255
