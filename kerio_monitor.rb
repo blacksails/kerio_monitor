@@ -50,6 +50,8 @@ class KerioMonitor
       end
       opts.on('-q', '--queue-length',
               'Returns number of queued messages, and exit code 1 if the number is above 100.') { handle_q_flag }
+      opts.on('-o', '--reference-count',
+              'Returns largest opened folder reference count') { handle_o_flag }
       opts.on('-r', '--reset-config', 'Resets the config file') do
         if File.exist? File.dirname(__FILE__)+'/config.yml'
           File.delete File.dirname(__FILE__)+'/config.yml'
@@ -93,6 +95,42 @@ class KerioMonitor
     else
       exit 1
     end
+  end
+
+  def handle_o_flag
+    login
+    options = {
+        body: {
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'Server.getOpenedFoldersInfo',
+            params: {
+              query: {
+                fields: ["referenceCount"],
+                start: 0,
+                limit: -1
+              }
+            }
+        }.to_json
+    }
+    response = self.class.post '/admin/api/jsonrpc/', options
+    logout
+    if response.code != 200
+      puts 'Error getting max folder references'
+      exit 255
+    end
+    parsedresponse = JSON.parse response.body
+    max_ref_count = 0
+    parsedresponse['result']['list'].each do |record|
+      if record['referenceCount'] > max_ref_count
+        max_ref_count = record['referenceCount']
+      end
+    end
+    puts max_ref_count
+    if max_ref_count >= 255
+      exit 255
+    end
+    exit max_ref_count
   end
 
   def login
